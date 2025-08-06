@@ -165,18 +165,14 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- ZAROORI: Apna Firebase Config Yahan Daalein ---
-        // 1. Firebase par ek naya project banayein.
-        // 2. Authentication -> Sign-in method -> Google ko enable karein.
-        // 3. Firestore Database -> Create database -> Start in production mode.
-        // 4. Project Settings se apna config object copy karke yahan paste karein.
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyB7h0K454CFmVeXXoPcbHlvFF-azb1onVk",
+            authDomain: "drownford-academy.firebaseapp.com",
+            projectId: "drownford-academy",
+            storageBucket: "drownford-academy.appspot.com",
+            messagingSenderId: "722393600482",
+            appId: "1:722393600482:web:7b61df9c3e0125e76629bb"
         };
         
         // Initialize Firebase
@@ -496,15 +492,7 @@
                 const userDocRef = await getUserDocRef();
                 await setDoc(userDocRef, { notes: { [topicId]: content } }, { merge: true });
             }
-            async function getProgress(topicId) {
-                const data = await getUserData();
-                return data.progress ? data.progress[topicId] : false;
-            }
-            async function saveProgress(topicId, isCompleted) {
-                const userDocRef = await getUserDocRef();
-                await setDoc(userDocRef, { progress: { [topicId]: isCompleted } }, { merge: true });
-            }
-
+            
             // --- Notes Logic ---
             function addNoteSavingListeners() {
                 document.querySelectorAll('.save-note-btn').forEach(button => {
@@ -546,6 +534,11 @@
             
             function getCompletedTopicCount() {
                 return Object.values(userProgressCache).filter(Boolean).length;
+            }
+
+            async function saveProgress(topicId, isCompleted) {
+                const userDocRef = await getUserDocRef();
+                await setDoc(userDocRef, { progress: { [topicId]: isCompleted } }, { merge: true });
             }
 
             function addProgressCheckboxListeners() {
