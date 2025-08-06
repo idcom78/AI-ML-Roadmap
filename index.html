@@ -175,11 +175,38 @@
             appId: "1:722393600482:web:7b61df9c3e0125e76629bb"
         };
         
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
+        // --- ZAROORI NIRDESH: Isse live karne se pehle yeh 2 kadam poore karein ---
+        //
+        // 1. FIREBASE AUTHENTICATION MEIN DOMAIN AUTHORIZE KAREIN:
+        //    - Apne Firebase project mein jaayein -> Authentication -> Settings -> Authorized domains.
+        //    - "Add domain" par click karein aur apni GitHub Pages ka domain daalein (jaise: <your-username>.github.io).
+        //
+        // 2. FIRESTORE SECURITY RULES SET KAREIN:
+        //    - Apne Firebase project mein jaayein -> Firestore Database -> Rules.
+        //    - Neeche diye gaye rules ko copy karke paste karein aur "Publish" par click karein:
+        //
+        //    rules_version = '2';
+        //    service cloud.firestore {
+        //      match /databases/{database}/documents {
+        //        match /users/{userId} {
+        //          allow read, write: if request.auth != null && request.auth.uid == userId;
+        //        }
+        //      }
+        //    }
+        //
+        // --- YEH NIRDESH POORE KARNE KE BAAD HI APP SAHI SE KAAM KAREGA ---
+
+        let app, auth, db, provider;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            provider = new GoogleAuthProvider();
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            alert("Firebase configuration mein galti hai. कृपया console check karein.");
+        }
+
 
         document.addEventListener('DOMContentLoaded', function () {
             // --- App State and Data ---
@@ -238,7 +265,11 @@
                 signInWithPopup(auth, provider)
                     .catch((error) => {
                         console.error("Authentication Error:", error);
-                        alert("Login failed. Please try again.");
+                        if (error.code === 'auth/unauthorized-domain') {
+                            alert("Login Error: Yeh domain authorized nahi hai.\n\nKripya Firebase project settings mein jaakar is domain ko authorize karein. Zaroori nirdesh code ke andar diye gaye hain.");
+                        } else {
+                            alert("Login failed. Please try again. Error: " + error.message);
+                        }
                     });
             }
 
@@ -480,8 +511,8 @@
             async function getUserData() {
                 const userDocRef = await getUserDocRef();
                 if (!userDocRef) return {};
-                const docSnap = await getDoc(userDocRef);
-                return docSnap.exists() ? docSnap.data() : {};
+                const docSnap = await getDoc(userDocRef).catch(err => console.error("Firestore read error:", err));
+                return docSnap && docSnap.exists() ? docSnap.data() : {};
             }
 
             async function getNote(topicId) {
@@ -490,7 +521,7 @@
             }
             async function saveNote(topicId, content) {
                 const userDocRef = await getUserDocRef();
-                await setDoc(userDocRef, { notes: { [topicId]: content } }, { merge: true });
+                await setDoc(userDocRef, { notes: { [topicId]: content } }, { merge: true }).catch(err => console.error("Firestore write error:", err));
             }
             
             // --- Notes Logic ---
@@ -538,7 +569,7 @@
 
             async function saveProgress(topicId, isCompleted) {
                 const userDocRef = await getUserDocRef();
-                await setDoc(userDocRef, { progress: { [topicId]: isCompleted } }, { merge: true });
+                await setDoc(userDocRef, { progress: { [topicId]: isCompleted } }, { merge: true }).catch(err => console.error("Firestore write error:", err));
             }
 
             function addProgressCheckboxListeners() {
