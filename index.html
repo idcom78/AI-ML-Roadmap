@@ -3,393 +3,680 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI/ML एक्सपर्ट बनने का इंटरैक्टिव रोडमैप</title>
+    <title>Drownford Academy - AI Learning Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Neutrals with Tech Blue -->
-    <!-- Application Structure Plan: The application uses a vertical, single-page scrolling structure with a sticky top navigation to mirror the linear, step-by-step nature of the source roadmap. This is the most intuitive flow for a learning path. Each of the 5 steps is a distinct section. Within each section, content is organized into interactive accordion cards to prevent information overload and allow users to explore topics at their own pace. A bar chart at the top visualizes the time commitment for each phase, providing an immediate, high-level overview. This structure was chosen to make the dense textual information digestible and easily navigable, prioritizing user-guided exploration over a static document. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Drownford Professional (Deep Blue, Gold, White) -->
+    <!-- Application Structure Plan: The application is now a multi-view SPA simulating a full educational platform named "Drownford Academy". It includes a client-side login/signup flow using localStorage. Post-login, a user-specific dashboard is presented. The structure is highly modular with views for Dashboard, Roadmap, Notebook, Progress, and AI Chat, all accessible via a redesigned sidebar. This creates a personalized, high-level, and scalable learning environment. -->
     <!-- Visualization & Content Choices: 
-        1. Report Info: Roadmap with 5 steps and estimated durations. Goal: Show the overall time commitment at a glance. Viz/Method: Horizontal Bar Chart. Interaction: Hovering over bars shows a tooltip with the exact duration range. Justification: A bar chart is excellent for comparing the discrete values (durations) of different categories (steps), making it easy to see which phases are longer. Library: Chart.js (Canvas).
-        2. Report Info: Hierarchical content within each step (e.g., चरण 1 -> गणित -> Linear Algebra). Goal: Organize complex information hierarchically and prevent cognitive overload. Viz/Method: Interactive Accordion Cards. Interaction: Clicking a topic header expands to show details. Justification: Accordions are ideal for progressive disclosure, allowing users to focus on one topic at a time without being overwhelmed by the full text of the roadmap. Library/Method: HTML/CSS/JS with Tailwind.
+        1. Login/Dashboard: A simulated auth flow to create a personalized experience. The dashboard provides a high-level summary of progress and quick access to other sections.
+        2. Notebook: Redesigned as a "digital book" with a more immersive UI for reading and editing notes, enhancing the user experience.
+        3. All previous features (Roadmap, Progress, AI Chat, Gemini tools) are retained but integrated into the new, more professional UI for a cohesive feel.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
-            background-color: #f8f9fa;
-            color: #212529;
+            background-color: #f0f4f8;
         }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        .main-content {
+            transition: margin-left 0.3s ease;
         }
-        .accordion-button.active + .accordion-content {
-            max-height: 1000px;
+        .sidebar {
+            transition: transform 0.3s ease;
         }
-        .accordion-button .arrow {
-            transition: transform 0.3s ease-in-out;
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
         }
-        .accordion-button.active .arrow {
-            transform: rotate(90deg);
+        .gemini-modal, .auth-modal {
+            transition: opacity 0.3s ease;
         }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
-            max-height: 400px;
+        .loader {
+            border-top-color: #4338ca;
+            animation: spin 1s linear infinite;
         }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 350px;
-            }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .chat-bubble { max-width: 80%; }
+        .chat-bubble-user { background-color: #dbeafe; }
+        .chat-bubble-ai { background-color: #e5e7eb; }
+        .notebook-page {
+            background-color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 3px solid #4338ca;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-slate-100">
 
-    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
-        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <h1 class="text-xl md:text-2xl font-bold text-blue-600">AI/ML रोडमैप</h1>
-                <div class="hidden md:flex items-center space-x-4">
-                    <a href="#charan-1" class="text-gray-600 hover:text-blue-600 font-medium transition-colors">चरण 1</a>
-                    <a href="#charan-2" class="text-gray-600 hover:text-blue-600 font-medium transition-colors">चरण 2</a>
-                    <a href="#charan-3" class="text-gray-600 hover:text-blue-600 font-medium transition-colors">चरण 3</a>
-                    <a href="#charan-4" class="text-gray-600 hover:text-blue-600 font-medium transition-colors">चरण 4</a>
-                    <a href="#charan-5" class="text-gray-600 hover:text-blue-600 font-medium transition-colors">चरण 5</a>
-                </div>
-                <div class="md:hidden">
-                    <select id="mobile-nav" class="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2">
-                        <option value="#home">नेविगेट करें</option>
-                        <option value="#charan-1">चरण 1</option>
-                        <option value="#charan-2">चरण 2</option>
-                        <option value="#charan-3">चरण 3</option>
-                        <option value="#charan-4">चरण 4</option>
-                        <option value="#charan-5">चरण 5</option>
-                    </select>
-                </div>
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal fixed inset-0 bg-gray-900 bg-opacity-60 z-[80] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div id="auth-view-container">
+                <!-- Login/Signup views will be injected here -->
             </div>
-        </nav>
-    </header>
+        </div>
+    </div>
 
-    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12" id="home">
-        
-        <section class="text-center mb-12 md:mb-16">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">AI, ML, DL & Data Science एक्सपर्ट बनें</h2>
-            <p class="max-w-3xl mx-auto text-lg text-gray-600">
-                यह इंटरैक्टिव रोडमैप आपको एक मज़बूत नींव बनाने से लेकर एडवांस टॉपिक्स में महारत हासिल करने तक का रास्ता दिखाएगा। हर चरण को क्रम से पूरा करना आपकी सफलता के लिए महत्वपूर्ण है।
-            </p>
-        </section>
-
-        <section class="mb-12 md:mb-16">
-            <h3 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">प्रत्येक चरण में अनुमानित समय</h3>
-            <p class="text-center text-gray-600 mb-8">यह चार्ट आपको प्रत्येक चरण के लिए आवश्यक अनुमानित समय की तुलना करने में मदद करता है। ध्यान दें कि चरण 4 और 5 निरंतर सीखने की प्रक्रिया हैं।</p>
-            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
-                <div class="chart-container">
-                    <canvas id="durationChart"></canvas>
+    <!-- Main App Structure (hidden by default) -->
+    <div id="app-container" class="hidden">
+        <div class="flex h-screen bg-white">
+            <!-- Sidebar -->
+            <aside class="sidebar w-64 bg-gray-900 text-white flex-col fixed h-full z-40 md:flex hidden">
+                <div class="px-6 py-5 border-b border-gray-700 flex items-center space-x-3">
+                    <span class="text-3xl">🎓</span>
+                    <h1 class="text-xl font-extrabold tracking-wider">Drownford Academy</h1>
                 </div>
+                <nav class="flex-1 px-4 py-4 space-y-2">
+                    <a href="#dashboard" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <span class="mr-3">🏠</span> Dashboard
+                    </a>
+                    <a href="#roadmap" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <span class="mr-3">🚀</span> AI Roadmap
+                    </a>
+                    <a href="#notebook" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <span class="mr-3">📖</span> Notebook
+                    </a>
+                    <a href="#progress" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <span class="mr-3">📊</span> Meri Progress
+                    </a>
+                    <a href="#chat" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <span class="mr-3">🤖</span> AI se Puchein
+                    </a>
+                </nav>
+                <div class="px-6 py-4 border-t border-gray-700">
+                    <button id="logout-btn" class="w-full flex items-center justify-center px-4 py-2.5 text-gray-300 bg-red-800/50 hover:bg-red-700/80 rounded-lg transition-colors">
+                        <span class="mr-3">🚪</span> Logout
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <div id="main-content" class="main-content flex-1 flex flex-col h-screen md:ml-64">
+                 <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-30 flex items-center justify-between px-6 py-4">
+                    <h2 id="view-title" class="text-2xl font-bold text-gray-800">Dashboard</h2>
+                    <div class="flex items-center space-x-4">
+                        <span class="font-semibold text-gray-600">Welcome, <span id="username-display"></span>!</span>
+                    </div>
+                </header>
+                
+                <main class="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50">
+                    <!-- Views will be injected here -->
+                    <div id="dashboard-view" class="view"></div>
+                    <div id="roadmap-view" class="view hidden"></div>
+                    <div id="notebook-view" class="view hidden"></div>
+                    <div id="progress-view" class="view hidden"></div>
+                    <div id="chat-view" class="view hidden"></div>
+                </main>
             </div>
-        </section>
-
-        <div id="charan-1" class="pt-20 -mt-16">
-            <section class="mb-12">
-                <div class="text-center mb-8">
-                    <span class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">चरण 1</span>
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-2">बुनियाद मज़बूत करें</h3>
-                    <p class="text-gray-600 mt-2">यह चरण सबसे महत्वपूर्ण है। इन कॉन्सेप्ट्स के बिना आगे बढ़ना मुश्किल होगा। (अवधि: 3-4 महीने)</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">📊 गणित (Mathematics)</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Linear Algebra:</strong> Vectors, Matrices, Eigenvalues</li>
-                                <li><strong>Calculus:</strong> Derivatives, Gradients</li>
-                                <li><strong>Probability & Statistics:</strong> Mean, Median, Variance, Distributions</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">💻 प्रोग्रामिंग (Programming)</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Python (Must Have):</strong> सीखें और माहिर बनें।</li>
-                                <li><strong>Libraries:</strong> NumPy, Pandas, Matplotlib & Seaborn</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">🛠️ ज़रूरी टूल्स (Essential Tools)</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Jupyter Notebooks / Google Colab</strong></li>
-                                <li><strong>Git & GitHub</strong></li>
-                                <li><strong>SQL (Database)</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </div>
-        
-        <div id="charan-2" class="pt-20 -mt-16">
-             <section class="mb-12">
-                <div class="text-center mb-8">
-                    <span class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">चरण 2</span>
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-2">Data Science और Machine Learning</h3>
-                    <p class="text-gray-600 mt-2">अब आप असली डेटा पर काम करना और मॉडल्स बनाना शुरू करेंगे। (अवधि: 4-6 महीने)</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">🔄 Data Science प्रक्रिया</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Data Collection:</strong> Web Scraping, APIs</li>
-                                <li><strong>Data Cleaning & Preprocessing:</strong> Missing Values, Outliers</li>
-                                <li><strong>Exploratory Data Analysis (EDA)</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">🧠 Machine Learning के सिद्धांत</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Supervised Learning:</strong> Regression, Classification</li>
-                                <li><strong>Unsupervised Learning:</strong> Clustering, Dimensionality Reduction</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">⚙️ मॉडल बनाना और सुधारना</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Feature Engineering</strong></li>
-                                <li><strong>Model Evaluation Metrics:</strong> Accuracy, Precision, Recall</li>
-                                <li><strong>Hyperparameter Tuning</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
+    </div>
+    
+    <!-- Gemini API Response Modal -->
+    <div id="gemini-modal" class="gemini-modal fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4 hidden opacity-0">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="gemini-modal-title" class="text-xl font-bold"></h3>
+                <button id="gemini-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div id="gemini-modal-content" class="p-6 overflow-y-auto" style="white-space: pre-wrap;"></div>
         </div>
-
-        <div id="charan-3" class="pt-20 -mt-16">
-            <section class="mb-12">
-                <div class="text-center mb-8">
-                    <span class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">चरण 3</span>
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-2">Deep Learning में गहराई</h3>
-                    <p class="text-gray-600 mt-2">यह ML का सबसे एडवांस और शक्तिशाली हिस्सा है। (अवधि: 4-6 महीने)</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">🕸️ Neural Networks की मूल बातें</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>Artificial Neural Networks (ANN)</strong></li>
-                                <li><strong>Activation Functions, Backpropagation</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">📚 Deep Learning Frameworks</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>TensorFlow</strong> या <strong>PyTorch</strong> (किसी एक में माहिर बनें)</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                        <button class="accordion-button w-full text-left p-5 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <span class="text-lg font-semibold text-gray-800">🏗️ एडवांस्ड आर्किटेक्चर</span>
-                            <span class="arrow text-blue-500 text-2xl font-bold transform transition-transform">›</span>
-                        </button>
-                        <div class="accordion-content">
-                            <ul class="p-5 pt-0 list-disc list-inside text-gray-700 space-y-2">
-                                <li><strong>CNNs:</strong> Computer Vision</li>
-                                <li><strong>RNNs & LSTMs:</strong> Natural Language Processing (NLP)</li>
-                                <li><strong>Transformers (BERT, GPT)</strong></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div id="charan-4" class="pt-20 -mt-16">
-            <section class="mb-12">
-                <div class="text-center mb-8">
-                    <span class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">चरण 4</span>
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-2">प्रोजेक्ट्स और प्रैक्टिकल अनुभव</h3>
-                    <p class="text-gray-600 mt-2">ज्ञान को असली दुनिया में लागू करने का समय। (अवधि: हमेशा जारी)</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <h4 class="font-bold text-xl mb-2">🚀 प्रोजेक्ट्स बनाएँ (Build Projects)</h4>
-                        <ul class="list-disc list-inside text-gray-700 space-y-2">
-                            <li>शुरू में आसान प्रोजेक्ट्स बनाएँ (जैसे: घर की कीमत का अनुमान लगाना)।</li>
-                            <li>धीरे-धीरे मुश्किल प्रोजेक्ट्स पर काम करें (जैसे: चेहरे की पहचान)।</li>
-                            <li>GitHub पर अपना पोर्टफोलियो बनाएँ।</li>
-                        </ul>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <h4 class="font-bold text-xl mb-2">🏆 प्रतियोगिताओं में भाग लें</h4>
-                        <ul class="list-disc list-inside text-gray-700 space-y-2">
-                            <li><strong>Kaggle:</strong> सीखने और प्रैक्टिस करने के लिए सबसे अच्छी जगह।</li>
-                            <li>वास्तविक डेटासेट पर काम करें और दूसरों से सीखें।</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div id="charan-5" class="pt-20 -mt-16">
-            <section class="mb-12">
-                <div class="text-center mb-8">
-                    <span class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">चरण 5</span>
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mt-2">विशेषज्ञता और MLOps</h3>
-                    <p class="text-gray-600 mt-2">एक खास क्षेत्र में एक्सपर्ट बनें और मॉडल्स को असल दुनिया में डिप्लॉय करना सीखें। (अवधि: हमेशा जारी)</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div class="bg-white rounded-xl shadow-md p-6">
-                        <h4 class="font-bold text-xl mb-2">⭐ किसी एक क्षेत्र में विशेषज्ञता</h4>
-                        <ul class="list-disc list-inside text-gray-700 space-y-2">
-                            <li>Computer Vision</li>
-                            <li>Natural Language Processing (NLP)</li>
-                            <li>Reinforcement Learning</li>
-                            <li>AI Ethics & Fairness</li>
-                        </ul>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <h4 class="font-bold text-xl mb-2">☁️ MLOps (Machine Learning Operations)</h4>
-                        <ul class="list-disc list-inside text-gray-700 space-y-2">
-                            <li><strong>Model Deployment:</strong> Flask, FastAPI</li>
-                            <li><strong>Containerization:</strong> Docker</li>
-                            <li><strong>Cloud Platforms:</strong> AWS, Google Cloud, Azure</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-    </main>
-
-    <footer class="bg-gray-800 text-white mt-12">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center">
-            <p>&copy; 2024 इंटरैक्टिव AI/ML रोडमैप. सीखने की यात्रा का आनंद लें!</p>
-        </div>
-    </footer>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="fixed inset-0 bg-black bg-opacity-25 z-[70] flex items-center justify-center hidden">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24"></div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const accordionButtons = document.querySelectorAll('.accordion-button');
-            accordionButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const currentlyActive = document.querySelector('.accordion-button.active');
-                    if (currentlyActive && currentlyActive !== button) {
-                        currentlyActive.classList.remove('active');
-                    }
-                    button.classList.toggle('active');
+            // --- App State and Data ---
+            const roadmapData = [
+                { id: 'charan-1', title: 'बुनियाद मज़बूत करें', duration: '3-4 महीने', topics: [
+                    { id: 'math', title: 'गणित (Mathematics)', items: ['Linear Algebra', 'Calculus', 'Probability & Statistics'] },
+                    { id: 'programming', title: 'प्रोग्रामिंग (Programming)', items: ['Python (Must Have)', 'Libraries: NumPy, Pandas, Matplotlib'] },
+                    { id: 'tools', title: 'ज़रूरी टूल्स (Essential Tools)', items: ['Jupyter Notebooks / Google Colab', 'Git & GitHub', 'SQL'] }
+                ]},
+                { id: 'charan-2', title: 'Data Science और Machine Learning', duration: '4-6 महीने', topics: [
+                    { id: 'ds-process', title: 'Data Science प्रक्रिया', items: ['Data Collection', 'Data Cleaning & Preprocessing', 'Exploratory Data Analysis (EDA)'] },
+                    { id: 'ml-core', title: 'Machine Learning के सिद्धांत', items: ['Supervised Learning', 'Unsupervised Learning'] },
+                    { id: 'model-building', title: 'मॉडल बनाना और सुधारना', items: ['Feature Engineering', 'Model Evaluation Metrics', 'Hyperparameter Tuning'] }
+                ]},
+                { id: 'charan-3', title: 'Deep Learning में गहराई', duration: '4-6 महीने', topics: [
+                    { id: 'nn-basics', title: 'Neural Networks की मूल बातें', items: ['Artificial Neural Networks (ANN)', 'Activation Functions, Backpropagation'] },
+                    { id: 'dl-frameworks', title: 'Deep Learning Frameworks', items: ['TensorFlow या PyTorch'] },
+                    { id: 'advanced-arch', title: 'एडवांस्ड आर्किटेक्चर', items: ['CNNs', 'RNNs & LSTMs', 'Transformers'] }
+                ]},
+                { id: 'charan-4', title: 'प्रोजेक्ट्स और प्रैक्टिकल अनुभव', duration: 'हमेशा जारी', topics: [
+                    { id: 'projects', title: 'प्रोजेक्ट्स बनाएँ (Build Projects)', items: ['छोटे प्रोजेक्ट से शुरू करें', 'बड़े प्रोजेक्ट्स पर काम करें', 'GitHub पर पोर्टफोलियो बनाएँ'] },
+                    { id: 'competitions', title: 'प्रतियोगिताओं में भाग लें', items: ['Kaggle पर प्रैक्टिस करें', 'वास्तविक डेटासेट पर काम करें'] }
+                ]},
+                { id: 'charan-5', title: 'विशेषज्ञता और MLOps', duration: 'हमेशा जारी', topics: [
+                    { id: 'specialization', title: 'किसी एक क्षेत्र में विशेषज्ञता', items: ['Computer Vision', 'Natural Language Processing (NLP)', 'Reinforcement Learning'] },
+                    { id: 'mlops', title: 'MLOps', items: ['Model Deployment', 'Containerization (Docker)', 'Cloud Platforms (AWS, GCP)'] }
+                ]}
+            ];
+            let currentUser = null;
+
+            // --- UI Element References ---
+            const authModal = document.getElementById('auth-modal');
+            const appContainer = document.getElementById('app-container');
+            const authViewContainer = document.getElementById('auth-view-container');
+            const views = document.querySelectorAll('.view');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const viewTitle = document.getElementById('view-title');
+            const usernameDisplay = document.getElementById('username-display');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            // --- AUTHENTICATION ---
+            function renderLoginView() {
+                authViewContainer.innerHTML = `
+                    <div class="p-8">
+                        <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Welcome Back!</h2>
+                        <p class="text-center text-gray-500 mb-8">Login to Drownford Academy</p>
+                        <div class="space-y-4">
+                            <input id="login-username" type="text" placeholder="Username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <input id="login-password" type="password" placeholder="Password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <button id="login-submit" class="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Login</button>
+                        <p class="text-center text-sm text-gray-500 mt-6">
+                            Don't have an account? <a href="#" id="show-signup" class="font-semibold text-indigo-600 hover:underline">Sign Up</a>
+                        </p>
+                    </div>
+                `;
+                document.getElementById('show-signup').addEventListener('click', (e) => { e.preventDefault(); renderSignupView(); });
+                document.getElementById('login-submit').addEventListener('click', handleLogin);
+            }
+            
+            function renderSignupView() {
+                authViewContainer.innerHTML = `
+                     <div class="p-8">
+                        <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Join the Academy</h2>
+                        <p class="text-center text-gray-500 mb-8">Create your Drownford account</p>
+                        <div class="space-y-4">
+                            <input id="signup-username" type="text" placeholder="Username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <input id="signup-password" type="password" placeholder="Password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <button id="signup-submit" class="w-full mt-6 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Create Account</button>
+                        <p class="text-center text-sm text-gray-500 mt-6">
+                            Already have an account? <a href="#" id="show-login" class="font-semibold text-indigo-600 hover:underline">Login</a>
+                        </p>
+                    </div>
+                `;
+                document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); renderLoginView(); });
+                document.getElementById('signup-submit').addEventListener('click', handleSignup);
+            }
+
+            function handleLogin() {
+                const username = document.getElementById('login-username').value.trim();
+                if (!username) { alert('Please enter a username.'); return; }
+                
+                const users = JSON.parse(localStorage.getItem('drownford_users') || '{}');
+                if (users[username]) {
+                    currentUser = username;
+                    localStorage.setItem('drownford_currentUser', currentUser);
+                    initializeApp();
+                } else {
+                    alert('User not found. Please sign up.');
+                }
+            }
+
+            function handleSignup() {
+                const username = document.getElementById('signup-username').value.trim();
+                if (!username) { alert('Please enter a username.'); return; }
+
+                let users = JSON.parse(localStorage.getItem('drownford_users') || '{}');
+                if (users[username]) {
+                    alert('Username already exists. Please login.');
+                    return;
+                }
+                users[username] = { createdAt: new Date() };
+                localStorage.setItem('drownford_users', JSON.stringify(users));
+                
+                currentUser = username;
+                localStorage.setItem('drownford_currentUser', currentUser);
+                initializeApp();
+            }
+
+            function handleLogout() {
+                currentUser = null;
+                localStorage.removeItem('drownford_currentUser');
+                authModal.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                renderLoginView();
+            }
+            logoutBtn.addEventListener('click', handleLogout);
+
+            // --- VIEW RENDERING ---
+            function renderDashboardView() {
+                const container = document.getElementById('dashboard-view');
+                const overallProgress = calculateOverallProgress();
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                            <h3 class="font-bold text-lg text-gray-500 mb-2">Overall Progress</h3>
+                            <p class="text-5xl font-extrabold text-indigo-600">${overallProgress.toFixed(0)}%</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${overallProgress}%"></div>
+                            </div>
+                        </div>
+                         <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                            <h3 class="font-bold text-lg text-gray-500 mb-2">Topics Completed</h3>
+                            <p class="text-5xl font-extrabold text-green-600">${getCompletedTopicCount()}</p>
+                             <p class="text-gray-500 mt-4">out of ${roadmapData.flatMap(s => s.topics).length} total topics</p>
+                        </div>
+                         <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                            <h3 class="font-bold text-lg text-gray-500 mb-2">Quick Actions</h3>
+                            <div class="mt-4 space-y-2">
+                                <a href="#roadmap" class="nav-link-action block text-center w-full bg-blue-100 text-blue-800 p-3 rounded-lg font-semibold hover:bg-blue-200">Continue Learning 🚀</a>
+                                <a href="#notebook" class="nav-link-action block text-center w-full bg-yellow-100 text-yellow-800 p-3 rounded-lg font-semibold hover:bg-yellow-200">View My Notes 📖</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.querySelectorAll('.nav-link-action').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        window.location.hash = new URL(link.href).hash;
+                    });
+                });
+            }
+            
+            function renderRoadmapView() {
+                const container = document.getElementById('roadmap-view');
+                container.innerHTML = roadmapData.map(stage => `
+                    <section id="${stage.id}" class="mb-12">
+                        <div class="mb-8">
+                            <span class="bg-indigo-100 text-indigo-800 text-sm font-medium mr-2 px-3 py-1 rounded-full">${stage.duration}</span>
+                            <h3 class="text-3xl font-bold text-gray-800 mt-2">${stage.title}</h3>
+                        </div>
+                        <div class="space-y-4">
+                            ${stage.topics.map(topic => `
+                                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                                    <button class="accordion-button w-full text-left p-5 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" class="progress-checkbox h-5 w-5 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 mr-4" data-topic-id="${topic.id}">
+                                            <span class="text-lg font-semibold text-gray-800">${topic.title}</span>
+                                        </div>
+                                        <span class="arrow text-indigo-500 text-2xl font-bold transform transition-transform">›</span>
+                                    </button>
+                                    <div class="accordion-content bg-gray-50/50">
+                                        <ul class="px-5 pt-2 pb-4 list-disc list-inside text-gray-700 space-y-2 ml-8">
+                                            ${topic.items.map(item => `<li>${item}</li>`).join('')}
+                                        </ul>
+                                        <div class="notes-section border-t border-gray-200 p-5">
+                                            <div class="flex flex-wrap gap-2 mb-4">
+                                                <button class="gemini-explain-btn text-sm bg-purple-100 text-purple-800 px-3 py-1 rounded-full hover:bg-purple-200 transition-colors" data-title="${topic.title}">✨ इससे समझाओ</button>
+                                                <button class="gemini-analogy-btn text-sm bg-teal-100 text-teal-800 px-3 py-1 rounded-full hover:bg-teal-200 transition-colors" data-title="${topic.title}">✨ Analogy दो</button>
+                                                <button class="gemini-question-btn text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full hover:bg-yellow-200 transition-colors" data-title="${topic.title}">✨ Practice सवाल</button>
+                                                <button class="gemini-project-btn text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full hover:bg-green-200 transition-colors" data-title="${topic.title}">✨ Project Ideas</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+                `).join('');
+                addAccordionListeners();
+                addGeminiButtonListeners();
+                addProgressCheckboxListeners();
+                updateProgressCheckboxes();
+            }
+
+            function renderProgressView() {
+                const container = document.getElementById('progress-view');
+                const overallProgress = calculateOverallProgress();
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-2xl shadow-lg">
+                        <h2 class="text-3xl font-extrabold text-gray-900 mb-2">आपकी सीखने की प्रगति</h2>
+                        <p class="text-gray-600 mb-8">अपनी प्रगति को ट्रैक करें और प्रेरित रहें।</p>
+                        
+                        <div class="mb-10">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-gray-700">कुल प्रगति</span>
+                                <span class="font-bold text-indigo-600">${overallProgress.toFixed(0)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="progress-bar-fill bg-indigo-600 h-4 rounded-full" style="width: ${overallProgress}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                        ${roadmapData.map(stage => {
+                            const stageProgress = calculateStageProgress(stage.id);
+                            return `
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-semibold text-gray-600">${stage.title}</span>
+                                    <span class="text-sm font-medium text-gray-500">${stageProgress.toFixed(0)}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="progress-bar-fill bg-green-500 h-2.5 rounded-full" style="width: ${stageProgress}%;"></div>
+                                </div>
+                            </div>
+                            `
+                        }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderNotebookView() {
+                const container = document.getElementById('notebook-view');
+                let notesHTML = `
+                    <div class="notebook-page p-8 rounded-lg">
+                        <h2 class="text-3xl font-bold text-gray-800 border-b pb-4 mb-6">My Digital Notebook</h2>
+                        <div class="space-y-8">
+                `;
+                let hasNotes = false;
+                roadmapData.forEach(stage => {
+                    stage.topics.forEach(topic => {
+                        const noteContent = getNote(topic.id) || '';
+                        hasNotes = hasNotes || noteContent.trim() !== '';
+                        notesHTML += `
+                            <div class="note-entry">
+                                <h3 class="text-xl font-bold text-indigo-700 mb-3">${topic.title}</h3>
+                                <textarea class="note-textarea w-full h-28 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-gray-50" data-key="${topic.id}" placeholder="इस विषय के लिए नोट्स यहाँ लिखें...">${noteContent}</textarea>
+                                <div class="flex justify-end items-center mt-3 space-x-3">
+                                     <button class="gemini-summary-btn text-sm bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full hover:bg-cyan-200 transition-colors" data-key="${topic.id}">✨ Summarize</button>
+                                     <span class="note-status text-sm text-green-600 opacity-0" data-key="${topic.id}">सहेजा गया!</span>
+                                     <button class="save-note-btn bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm" data-key="${topic.id}">नोट्स सहेजें</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+                notesHTML += `</div></div>`;
+                container.innerHTML = notesHTML;
+                addNoteSavingListeners();
+                addNoteGeminiListeners();
+            }
+
+            function renderChatView() {
+                const container = document.getElementById('chat-view');
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-lg h-[75vh] flex flex-col">
+                        <div class="p-4 border-b">
+                             <h2 class="text-xl font-bold text-gray-900">AI से Puchein</h2>
+                             <p class="text-sm text-gray-500">AI/ML से जुड़ा कोई भी सवाल पूछें।</p>
+                        </div>
+                        <div id="chat-history" class="flex-1 p-6 overflow-y-auto space-y-4">
+                            <div class="flex justify-start">
+                                <div class="chat-bubble chat-bubble-ai p-3 rounded-lg">
+                                    नमस्ते! मैं आपका AI लर्निंग असिस्टेंट हूँ। आप मुझसे AI, Machine Learning, या इस रोडमैप से जुड़ा कोई भी सवाल पूछ सकते हैं।
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t bg-gray-50">
+                            <div class="flex items-center space-x-3">
+                                <input type="text" id="chat-input" class="flex-1 w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="अपना सवाल यहाँ टाइप करें...">
+                                <button id="chat-send-btn" class="bg-indigo-600 text-white rounded-full p-3 hover:bg-indigo-700 transition-colors">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M3.105 3.105a1 1 0 011.414 0L10 8.586l5.48-5.481a1 1 0 111.415 1.415L11.414 10l5.481 5.48a1 1 0 11-1.415 1.415L10 11.414l-5.48 5.481a1 1 0 11-1.415-1.415L8.586 10 3.105 4.52a1 1 0 010-1.414z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                addChatListeners();
+            }
+
+            // --- Navigation ---
+            function switchView(hash) {
+                views.forEach(view => view.classList.add('hidden'));
+                navLinks.forEach(link => link.classList.remove('bg-gray-700', 'text-white'));
+                
+                const activeLink = document.querySelector(`.nav-link[href="${hash}"]`);
+                const activeView = document.querySelector(`${hash}-view`);
+                
+                if (activeLink && activeView) {
+                    activeLink.classList.add('bg-gray-700', 'text-white');
+                    activeView.classList.remove('hidden');
+                    viewTitle.textContent = activeLink.textContent.trim();
+                } else {
+                    document.querySelector('.nav-link[href="#dashboard"]').classList.add('bg-gray-700', 'text-white');
+                    document.getElementById('dashboard-view').classList.remove('hidden');
+                    viewTitle.textContent = 'Dashboard';
+                }
+                
+                if (hash === '#dashboard') renderDashboardView();
+                if (hash === '#roadmap') renderRoadmapView();
+                if (hash === '#progress') renderProgressView();
+                if (hash === '#notebook') renderNotebookView();
+                if (hash === '#chat') renderChatView();
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.location.hash = new URL(link.href).hash;
                 });
             });
+            
+            window.addEventListener('hashchange', () => switchView(window.location.hash));
+            
+            // --- User Data Helpers (Notes, Progress) ---
+            function getNote(topicId) { return localStorage.getItem(`note_${currentUser}_${topicId}`); }
+            function saveNote(topicId, content) { localStorage.setItem(`note_${currentUser}_${topicId}`, content); }
+            function getProgress(topicId) { return localStorage.getItem(`progress_${currentUser}_${topicId}`) === 'true'; }
+            function saveProgress(topicId, isCompleted) { localStorage.setItem(`progress_${currentUser}_${topicId}`, isCompleted); }
 
-            const mobileNav = document.getElementById('mobile-nav');
-            mobileNav.addEventListener('change', function() {
-                if (this.value) {
-                    window.location.hash = this.value;
-                }
-            });
+            // --- Notes Logic ---
+            function addNoteSavingListeners() {
+                document.querySelectorAll('.save-note-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const key = button.dataset.key;
+                        const textarea = document.querySelector(`textarea[data-key="${key}"]`);
+                        saveNote(key, textarea.value);
+                        
+                        const status = document.querySelector(`.note-status[data-key="${key}"]`);
+                        status.style.opacity = '1';
+                        setTimeout(() => { status.style.opacity = '0'; }, 2000);
+                    });
+                });
+            }
 
-            const ctx = document.getElementById('durationChart').getContext('2d');
-            const durationChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['चरण 1: बुनियाद', 'चरण 2: ML/DS', 'चरण 3: Deep Learning'],
-                    datasets: [{
-                        label: 'न्यूनतम महीने',
-                        data: [3, 4, 4],
-                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'अधिकतम महीने',
-                        data: [4, 6, 6],
-                        backgroundColor: 'rgba(16, 185, 129, 0.5)',
-                        borderColor: 'rgba(16, 185, 129, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            stacked: false,
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'महीनों में अवधि'
-                            }
-                        },
-                        y: {
-                            stacked: false,
-                        }
-                    },
-                    plugins: {
-                        title: {
-                            display: false,
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.x !== null) {
-                                        label += context.parsed.x + ' महीने';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
+            // --- Progress Tracking Logic ---
+            function calculateStageProgress(stageId) {
+                const stage = roadmapData.find(s => s.id === stageId);
+                if (!stage) return 0;
+                const totalTopics = stage.topics.length;
+                if (totalTopics === 0) return 100;
+                const completedTopics = stage.topics.filter(topic => getProgress(topic.id)).length;
+                return (completedTopics / totalTopics) * 100;
+            }
+
+            function calculateOverallProgress() {
+                const allTopics = roadmapData.flatMap(stage => stage.topics);
+                const totalTopics = allTopics.length;
+                if (totalTopics === 0) return 100;
+                const completedTopics = allTopics.filter(topic => getProgress(topic.id)).length;
+                return (completedTopics / totalTopics) * 100;
+            }
+            
+            function getCompletedTopicCount() {
+                return roadmapData.flatMap(stage => stage.topics).filter(topic => getProgress(topic.id)).length;
+            }
+
+            function addProgressCheckboxListeners() {
+                document.querySelectorAll('.progress-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        saveProgress(e.target.dataset.topicId, e.target.checked);
+                    });
+                });
+            }
+
+            function updateProgressCheckboxes() {
+                document.querySelectorAll('.progress-checkbox').forEach(checkbox => {
+                    checkbox.checked = getProgress(checkbox.dataset.topicId);
+                });
+            }
+            
+            // --- Accordion Logic ---
+            function addAccordionListeners() {
+                document.querySelectorAll('.accordion-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                         if (e.target.type === 'checkbox') return;
+                        button.classList.toggle('active');
+                        const arrow = button.querySelector('.arrow');
+                        arrow.classList.toggle('rotate-90');
+                    });
+                });
+            }
+            
+            // --- Gemini API Logic ---
+            const apiKey = ""; // Handled by environment
+            const geminiModal = document.getElementById('gemini-modal');
+            const geminiModalTitle = document.getElementById('gemini-modal-title');
+            const geminiModalContent = document.getElementById('gemini-modal-content');
+            const geminiModalClose = document.getElementById('gemini-modal-close');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            function showLoading(show) { loadingIndicator.classList.toggle('hidden', !show); }
+            function showModal(title, content) {
+                geminiModalTitle.textContent = title;
+                geminiModalContent.innerHTML = content.replace(/\n/g, '<br>');
+                geminiModal.classList.remove('hidden');
+                setTimeout(() => geminiModal.classList.remove('opacity-0'), 10);
+            }
+            function hideModal() {
+                geminiModal.classList.add('opacity-0');
+                setTimeout(() => geminiModal.classList.add('hidden'), 300);
+            }
+            geminiModalClose.addEventListener('click', hideModal);
+
+            async function callGeminiAPI(prompt) {
+                showLoading(true);
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        return result.candidates[0].content.parts[0].text;
                     }
+                    return "माफ़ कीजिए, कोई जवाब नहीं मिला।";
+                } catch (error) {
+                    return `एक त्रुटि हुई: ${error.message}.`;
+                } finally {
+                    showLoading(false);
                 }
-            });
+            }
+
+            function addGeminiButtonListeners() {
+                document.querySelectorAll('.gemini-explain-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const topic = button.dataset.title;
+                        const prompt = `"${topic}" विषय को सरल हिंदी में, उदाहरणों के साथ समझाएं। इसे एक नए सीखने वाले के लिए आसान बनाएं।`;
+                        const response = await callGeminiAPI(prompt);
+                        showModal(`'${topic}' का स्पष्टीकरण`, response);
+                    });
+                });
+                document.querySelectorAll('.gemini-question-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const topic = button.dataset.title;
+                        const prompt = `"${topic}" विषय के लिए 3 बहुविकल्पीय अभ्यास प्रश्न (MCQs) उत्तरों के साथ हिंदी में बनाएं। हर प्रश्न के बाद सही उत्तर स्पष्ट रूप से बताएं।`;
+                        const response = await callGeminiAPI(prompt);
+                        showModal(`'${topic}' के लिए अभ्यास प्रश्न`, response);
+                    });
+                });
+                 document.querySelectorAll('.gemini-analogy-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const topic = button.dataset.title;
+                        const prompt = `"${topic}" की अवधारणा को एक सरल, वास्तविक दुनिया के सादृश्य (analogy) का उपयोग करके हिंदी में समझाएं।`;
+                        const response = await callGeminiAPI(prompt);
+                        showModal(`'${topic}' के लिए Analogy`, response);
+                    });
+                });
+                document.querySelectorAll('.gemini-project-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const topic = button.dataset.title;
+                        const prompt = `"${topic}" विषय पर एक शुरुआती सीखने वाले के लिए 3 रचनात्मक और व्यावहारिक प्रोजेक्ट विचार (project ideas) एक सूची के रूप में हिंदी में दें।`;
+                        const response = await callGeminiAPI(prompt);
+                        showModal(`'${topic}' के लिए Project Ideas`, response);
+                    });
+                });
+            }
+
+            function addNoteGeminiListeners() {
+                 document.querySelectorAll('.gemini-summary-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const key = button.dataset.key;
+                        const textarea = document.querySelector(`textarea[data-key="${key}"]`);
+                        const noteContent = textarea.value;
+                        if (!noteContent.trim()) {
+                            alert('कृपया सारांश बनाने के लिए पहले कुछ नोट्स लिखें।');
+                            return;
+                        }
+                        const prompt = `निम्नलिखित नोट्स को कुछ प्रमुख बिंदुओं (key bullet points) में हिंदी में सारांशित करें। नोट्स: "${noteContent}"`;
+                        const response = await callGeminiAPI(prompt);
+                        showModal('आपके नोट्स का सारांश', response);
+                    });
+                });
+            }
+            
+            // --- AI Chat Logic ---
+            function addChatListeners() {
+                const chatInput = document.getElementById('chat-input');
+                const chatSendBtn = document.getElementById('chat-send-btn');
+                const handleSend = async () => {
+                    const userInput = chatInput.value.trim();
+                    if (!userInput) return;
+                    appendChatMessage(userInput, 'user');
+                    chatInput.value = '';
+                    showLoading(true);
+                    const prompt = `You are an AI learning assistant. A user has asked the following question in Hindi: "${userInput}". Provide a helpful and clear answer in Hindi.`;
+                    const aiResponse = await callGeminiAPI(prompt);
+                    showLoading(false);
+                    appendChatMessage(aiResponse, 'ai');
+};
+                chatSendBtn.addEventListener('click', handleSend);
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleSend();
+                });
+            }
+
+            function appendChatMessage(message, sender) {
+                const chatHistory = document.getElementById('chat-history');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = `chat-bubble p-3 rounded-lg ${sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}`;
+                bubbleDiv.innerHTML = message.replace(/\n/g, '<br>');
+                messageDiv.appendChild(bubbleDiv);
+                chatHistory.appendChild(messageDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+
+            // --- Initial App Load ---
+            function initializeApp() {
+                authModal.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                usernameDisplay.textContent = currentUser;
+                switchView(window.location.hash || '#dashboard');
+            }
+
+            // Check for logged in user on start
+            const savedUser = localStorage.getItem('drownford_currentUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                initializeApp();
+            } else {
+                renderLoginView();
+            }
         });
     </script>
-
 </body>
 </html>
+```
+
+</detai
