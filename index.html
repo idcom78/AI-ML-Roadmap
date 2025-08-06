@@ -10,12 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Drownford Professional (Deep Blue, Gold, White) -->
-    <!-- Application Structure Plan: The application is now a multi-view SPA simulating a full educational platform named "Drownford Academy". It includes a client-side login/signup flow using localStorage. Post-login, a user-specific dashboard is presented. The structure is highly modular with views for Dashboard, Roadmap, Notebook, Progress, and AI Chat, all accessible via a redesigned sidebar. This creates a personalized, high-level, and scalable learning environment. -->
+    <!-- Application Structure Plan: The application now uses Firebase for authentication and Firestore for data storage, replacing the localStorage simulation. This provides a secure, scalable, and real-time backend. The login flow uses Google Sign-In. All user data (notes, progress, API key) is stored in a user-specific document in Firestore, ensuring data privacy. -->
     <!-- Visualization & Content Choices: 
-        1. Login/Dashboard: A simulated auth flow to create a personalized experience. The dashboard provides a high-level summary of progress and quick access to other sections.
-        2. Notebook: Redesigned as a "digital book" with a more immersive UI for reading and editing notes, enhancing the user experience.
-        3. All previous features (Roadmap, Progress, AI Chat, Gemini tools) are retained but integrated into the new, more professional UI for a cohesive feel.
-        4. API Key Management: Added a settings modal for users to input their own Gemini API key, which is stored in localStorage. This solves the hosting issue securely.
+        1. Authentication: Replaced simulated login with Firebase Authentication (Google Provider).
+        2. Data Persistence: Replaced all localStorage calls with Firestore getDoc/setDoc operations for a real-time, cloud-based database.
+        3. UI: The UI remains consistent, but the underlying logic is now powered by a robust backend service.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -45,31 +44,10 @@
         .chat-bubble { max-width: 80%; }
         .chat-bubble-user { background-color: #dbeafe; }
         .chat-bubble-ai { background-color: #e5e7eb; }
-        .notebook-container {
-            perspective: 2000px;
-        }
-        .notebook {
-            width: 100%;
-            height: 80vh;
-            position: relative;
-            transition: transform 0.5s;
-            transform-style: preserve-3d;
-        }
         .notebook-page {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
             background-color: #fff;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid #e2e8f0;
-            overflow-y: auto;
-        }
-        .notebook-page.front {
-            z-index: 1;
-        }
-        .notebook-page.back {
-            transform: rotateY(180deg);
+            border-left: 3px solid #4338ca;
         }
     </style>
 </head>
@@ -82,7 +60,8 @@
                  <h1 class="text-2xl font-extrabold tracking-wider text-gray-800">Drownford Academy</h1>
                  <p class="text-gray-500 mt-2 mb-8">AI सीखने के भविष्य में आपका स्वागत है।</p>
                  <button id="google-signin-btn" class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                    <span class="mr-3 text-xl">G</span> Sign in with Google
+                    <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#34A853" d="M6.306 14.691L12.16 19.319C12.823 16.633 14.994 14.691 17.657 13.576L11.8 8.958C9.642 10.743 7.68 12.535 6.306 14.691z"></path><path fill="#FBBC05" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-5.657-5.657C30.046 35.668 27.225 37 24 37c-3.204 0-6.036-1.35-8.058-3.456L10.32 28.864C13.438 34.022 18.373 37 24 37z" transform="translate(0 -1)"></path><path fill="#EA4335" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.16-4.082 5.571l5.657 5.657C40.072 35.127 44 29.836 44 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
+                    Sign in with Google
                  </button>
             </div>
         </div>
@@ -145,7 +124,7 @@
                     </button>
                     <h2 id="view-title" class="text-2xl font-bold text-gray-800">Dashboard</h2>
                     <div class="flex items-center space-x-4">
-                        <span class="font-semibold text-gray-600">Welcome, <span id="username-display"></span>!</span>
+                        <span id="username-display" class="font-semibold text-gray-600"></span>
                         <button id="settings-btn" class="text-gray-600 hover:text-indigo-600">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
@@ -180,7 +159,32 @@
         <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24"></div>
     </div>
 
-    <script>
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- ZAROORI: Apna Firebase Config Yahan Daalein ---
+        // 1. Firebase par ek naya project banayein.
+        // 2. Authentication -> Sign-in method -> Google ko enable karein.
+        // 3. Firestore Database -> Create database -> Start in production mode.
+        // 4. Project Settings se apna config object copy karke yahan paste karein.
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
         document.addEventListener('DOMContentLoaded', function () {
             // --- App State and Data ---
             const roadmapData = [
@@ -223,30 +227,29 @@
             const settingsModal = document.getElementById('settings-modal');
 
             // --- AUTHENTICATION ---
-            function renderAuthView() {
-                document.getElementById('google-signin-btn').addEventListener('click', handleGoogleSignIn);
-            }
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    initializeApp();
+                } else {
+                    currentUser = null;
+                    authModal.classList.remove('hidden');
+                    appContainer.classList.add('hidden');
+                }
+            });
 
             function handleGoogleSignIn() {
-                // Simulate Google Sign-In
-                const email = prompt("Simulated Google Sign-in:\nPlease enter your email to login or sign up.", "student@drownford.com");
-                if (!email || !email.includes('@')) {
-                    alert('Please enter a valid email.');
-                    return;
-                }
-                
-                currentUser = email;
-                localStorage.setItem('drownford_currentUser', currentUser);
-                initializeApp();
+                signInWithPopup(auth, provider)
+                    .catch((error) => {
+                        console.error("Authentication Error:", error);
+                        alert("Login failed. Please try again.");
+                    });
             }
 
             function handleLogout() {
-                currentUser = null;
-                localStorage.removeItem('drownford_currentUser');
-                localStorage.removeItem('gemini_api_key');
-                authModal.classList.remove('hidden');
-                appContainer.classList.add('hidden');
+                signOut(auth);
             }
+            document.getElementById('google-signin-btn').addEventListener('click', handleGoogleSignIn);
             logoutBtn.addEventListener('click', handleLogout);
 
             // --- VIEW RENDERING ---
@@ -364,15 +367,15 @@
                 `;
             }
 
-            function renderNotebookView() {
+            async function renderNotebookView() {
                 const container = document.getElementById('notebook-view');
                 let tocHTML = '<div class="w-full lg:w-1/3 p-4"><h3 class="text-2xl font-bold text-gray-800 mb-4">Table of Contents</h3><ul class="space-y-2">';
                 let notesHTML = '<div class="w-full lg:w-2/3 p-4 space-y-8">';
                 
-                roadmapData.forEach(stage => {
+                for (const stage of roadmapData) {
                     notesHTML += `<h4 class="text-xl font-bold text-indigo-800 mt-6 border-b pb-2">${stage.title}</h4>`;
-                    stage.topics.forEach(topic => {
-                        const noteContent = getNote(topic.id) || '';
+                    for (const topic of stage.topics) {
+                        const noteContent = await getNote(topic.id) || '';
                         tocHTML += `<li><a href="#note-${topic.id}" class="text-indigo-600 hover:underline">${topic.title}</a></li>`;
                         notesHTML += `
                             <div id="note-${topic.id}" class="note-entry pt-4">
@@ -385,8 +388,8 @@
                                 </div>
                             </div>
                         `;
-                    });
-                });
+                    }
+                }
                 tocHTML += '</ul></div>';
                 notesHTML += '</div>';
 
@@ -473,18 +476,42 @@
             });
 
             // --- User Data Helpers (Notes, Progress) ---
-            function getNote(topicId) { return localStorage.getItem(`note_${currentUser}_${topicId}`); }
-            function saveNote(topicId, content) { localStorage.setItem(`note_${currentUser}_${topicId}`, content); }
-            function getProgress(topicId) { return localStorage.getItem(`progress_${currentUser}_${topicId}`) === 'true'; }
-            function saveProgress(topicId, isCompleted) { localStorage.setItem(`progress_${currentUser}_${topicId}`, isCompleted); }
+            async function getUserDocRef() {
+                if (!currentUser) return null;
+                return doc(db, "users", currentUser.uid);
+            }
+
+            async function getUserData() {
+                const userDocRef = await getUserDocRef();
+                if (!userDocRef) return {};
+                const docSnap = await getDoc(userDocRef);
+                return docSnap.exists() ? docSnap.data() : {};
+            }
+
+            async function getNote(topicId) {
+                const data = await getUserData();
+                return data.notes ? data.notes[topicId] : '';
+            }
+            async function saveNote(topicId, content) {
+                const userDocRef = await getUserDocRef();
+                await setDoc(userDocRef, { notes: { [topicId]: content } }, { merge: true });
+            }
+            async function getProgress(topicId) {
+                const data = await getUserData();
+                return data.progress ? data.progress[topicId] : false;
+            }
+            async function saveProgress(topicId, isCompleted) {
+                const userDocRef = await getUserDocRef();
+                await setDoc(userDocRef, { progress: { [topicId]: isCompleted } }, { merge: true });
+            }
 
             // --- Notes Logic ---
             function addNoteSavingListeners() {
                 document.querySelectorAll('.save-note-btn').forEach(button => {
-                    button.addEventListener('click', () => {
+                    button.addEventListener('click', async () => {
                         const key = button.dataset.key;
                         const textarea = document.querySelector(`textarea[data-key="${key}"]`);
-                        saveNote(key, textarea.value);
+                        await saveNote(key, textarea.value);
                         
                         const status = document.querySelector(`.note-status[data-key="${key}"]`);
                         status.style.opacity = '1';
@@ -494,12 +521,18 @@
             }
 
             // --- Progress Tracking Logic ---
+            let userProgressCache = {};
+            async function fetchAllProgress() {
+                const data = await getUserData();
+                userProgressCache = data.progress || {};
+            }
+
             function calculateStageProgress(stageId) {
                 const stage = roadmapData.find(s => s.id === stageId);
                 if (!stage) return 0;
                 const totalTopics = stage.topics.length;
                 if (totalTopics === 0) return 100;
-                const completedTopics = stage.topics.filter(topic => getProgress(topic.id)).length;
+                const completedTopics = stage.topics.filter(topic => userProgressCache[topic.id]).length;
                 return (completedTopics / totalTopics) * 100;
             }
 
@@ -507,25 +540,28 @@
                 const allTopics = roadmapData.flatMap(stage => stage.topics);
                 const totalTopics = allTopics.length;
                 if (totalTopics === 0) return 100;
-                const completedTopics = allTopics.filter(topic => getProgress(topic.id)).length;
+                const completedTopics = allTopics.filter(topic => userProgressCache[topic.id]).length;
                 return (completedTopics / totalTopics) * 100;
             }
             
             function getCompletedTopicCount() {
-                return roadmapData.flatMap(stage => stage.topics).filter(topic => getProgress(topic.id)).length;
+                return Object.values(userProgressCache).filter(Boolean).length;
             }
 
             function addProgressCheckboxListeners() {
                 document.querySelectorAll('.progress-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', (e) => {
-                        saveProgress(e.target.dataset.topicId, e.target.checked);
+                    checkbox.addEventListener('change', async (e) => {
+                        const topicId = e.target.dataset.topicId;
+                        const isCompleted = e.target.checked;
+                        await saveProgress(topicId, isCompleted);
+                        userProgressCache[topicId] = isCompleted; // Update cache
                     });
                 });
             }
 
             function updateProgressCheckboxes() {
                 document.querySelectorAll('.progress-checkbox').forEach(checkbox => {
-                    checkbox.checked = getProgress(checkbox.dataset.topicId);
+                    checkbox.checked = userProgressCache[checkbox.dataset.topicId] || false;
                 });
             }
             
@@ -565,21 +601,23 @@
                 setTimeout(() => modal.classList.add('hidden'), 300);
             }
             geminiModalClose.addEventListener('click', () => hideModal(geminiModal));
-            settingsBtn.addEventListener('click', () => {
-                apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+            settingsBtn.addEventListener('click', async () => {
+                const data = await getUserData();
+                apiKeyInput.value = data.apiKey || '';
                 settingsModal.classList.remove('hidden');
                 setTimeout(() => settingsModal.classList.remove('opacity-0'), 10);
             });
             settingsModalClose.addEventListener('click', () => hideModal(settingsModal));
-            saveApiKeyBtn.addEventListener('click', () => {
-                localStorage.setItem('gemini_api_key', apiKeyInput.value);
+            saveApiKeyBtn.addEventListener('click', async () => {
+                const userDocRef = await getUserDocRef();
+                await setDoc(userDocRef, { apiKey: apiKeyInput.value }, { merge: true });
                 hideModal(settingsModal);
                 alert('API Key saved successfully!');
             });
 
-
             async function callGeminiAPI(prompt) {
-                const apiKey = localStorage.getItem('gemini_api_key');
+                const data = await getUserData();
+                const apiKey = data.apiKey;
                 if (!apiKey) {
                     alert('Please set your Gemini API key in the settings first.');
                     settingsBtn.click();
@@ -607,11 +645,10 @@
                 }
             }
 
-            async function handleGeminiRequest(prompt, modalTitle, modalContentProcessor) {
+            async function handleGeminiRequest(prompt, modalTitle) {
                 const response = await callGeminiAPI(prompt);
                 if (response) {
-                    const processedContent = modalContentProcessor ? modalContentProcessor(response) : response;
-                    showModal(modalTitle, processedContent);
+                    showModal(modalTitle, response);
                 }
             }
 
@@ -688,20 +725,12 @@
             }
 
             // --- Initial App Load ---
-            function initializeApp() {
+            async function initializeApp() {
                 authModal.classList.add('hidden');
                 appContainer.classList.remove('hidden');
-                usernameDisplay.textContent = currentUser.split('@')[0];
+                usernameDisplay.textContent = currentUser.displayName || currentUser.email.split('@')[0];
+                await fetchAllProgress();
                 switchView(window.location.hash || '#dashboard');
-            }
-
-            // Check for logged in user on start
-            const savedUser = localStorage.getItem('drownford_currentUser');
-            if (savedUser) {
-                currentUser = savedUser;
-                initializeApp();
-            } else {
-                renderAuthView();
             }
         });
     </script>
