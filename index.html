@@ -16,6 +16,7 @@
         2. Data Persistence: Replaced all localStorage calls with Firestore getDoc/setDoc operations for a real-time, cloud-based database.
         3. UI: The UI remains consistent, but the underlying logic is now powered by a robust backend service.
         4. Voice Assistant: A new voice assistant feature using the Web Speech API (SpeechRecognition and SpeechSynthesis) has been added. It's activated by a "Drownford Academy" wake word and uses a context-aware Gemini prompt.
+        5. Time Management Tool: A new view with a Pomodoro timer, To-Do list, and study log, all synced with Firestore.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -62,6 +63,11 @@
                 transform: scale(1.1);
                 opacity: 0.7; 
             }
+        }
+        .timer-circle {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
         }
     </style>
 </head>
@@ -131,6 +137,9 @@
                     <a href="#progress" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
                         <span class="mr-3">📊</span> Meri Progress
                     </a>
+                    <a href="#time" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <span class="mr-3">⏰</span> Time Management
+                    </a>
                     <a href="#chat" class="nav-link flex items-center px-4 py-2.5 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
                         <span class="mr-3">🤖</span> AI se Puchein
                     </a>
@@ -166,6 +175,7 @@
                     <div id="roadmap-view" class="view hidden"></div>
                     <div id="notebook-view" class="view hidden"></div>
                     <div id="progress-view" class="view hidden"></div>
+                    <div id="time-view" class="view hidden"></div>
                     <div id="chat-view" class="view hidden"></div>
                 </main>
             </div>
@@ -192,7 +202,7 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -489,6 +499,47 @@
                 `;
                 addChatListeners();
             }
+            
+            function renderTimeManagementView() {
+                const container = document.getElementById('time-view');
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Pomodoro Timer</h2>
+                            <div class="relative w-48 h-48 mx-auto mb-4">
+                                <svg class="w-full h-full" viewBox="0 0 100 100">
+                                    <circle class="text-gray-200" stroke-width="7" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                                    <circle id="timer-progress-ring" class="text-indigo-600 timer-circle" stroke-width="7" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" transform="rotate(-90 50 50)" />
+                                </svg>
+                                <span id="timer-display" class="absolute inset-0 flex items-center justify-center text-4xl font-bold">25:00</span>
+                            </div>
+                            <div class="flex justify-center space-x-4">
+                                <button id="timer-start-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold">Start</button>
+                                <button id="timer-pause-btn" class="bg-yellow-500 text-white px-6 py-2 rounded-lg font-semibold">Pause</button>
+                                <button id="timer-reset-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold">Reset</button>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-lg">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">To-Do List</h2>
+                            <div class="flex mb-4">
+                                <input id="task-input" type="text" placeholder="Naya task jodein..." class="flex-1 w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500">
+                                <button id="add-task-btn" class="bg-indigo-600 text-white px-4 rounded-r-lg font-semibold">+</button>
+                            </div>
+                            <ul id="task-list" class="space-y-2 h-48 overflow-y-auto"></ul>
+                        </div>
+                        <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-lg">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Study Log</h2>
+                            <ul id="study-log-list" class="space-y-2 h-48 overflow-y-auto">
+                                <!-- Logs will be here -->
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                addTimerListeners();
+                addTaskListeners();
+                renderTasks();
+                renderStudyLog();
+            }
 
             // --- Navigation ---
             function switchView(hash) {
@@ -513,6 +564,7 @@
                 if (hash === '#progress') renderProgressView();
                 if (hash === '#notebook') renderNotebookView();
                 if (hash === '#chat') renderChatView();
+                if (hash === '#time') renderTimeManagementView();
             }
 
             navLinks.forEach(link => {
